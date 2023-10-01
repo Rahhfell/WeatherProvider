@@ -96,7 +96,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                                 ref.read(showProvider.notifier).changeShow();
                               },
                               child: const Text(
-                                'My Current Weather',
+                                'Current Location',
                                 style: TextStyle(color: Colors.black),
                               ))),
                       Consumer(builder: (context, ref, child) {
