@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:assessmentfc/repo/permission.dart';
+import 'package:assessmentfc/views/my_homepage.dart';
 import 'package:flutter/material.dart';
 
 import 'package:assessmentfc/models/city_list_model.dart';
@@ -11,6 +12,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:assessmentfc/utilities/city.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String apiKey = '08a99d02b785c3ad65d2fbdb34f6e015';
 
@@ -52,36 +54,24 @@ class GeoLocating {
   }
 }
 
-class CityServices extends RestorableChangeNotifier {
-  final List<CityModel> _cities = Jsoncity().cityList().sublist(0, 3);
-  List<CityModel> get cities => _cities;
+class CityServices extends ChangeNotifier {
+  List<CityModel> get _cities => Jsoncity().cityList().sublist(0, 3);
 
+  List<CityModel> get cities => cachecity ?? _cities;
   void addCity(CityModel city) {
-    if (cities.length < 3 && !cities.any((element) => element == city)) {
-      _cities.add(city);
+    if (cities.any((element) => element == city)) {
+      return;
+    } else if (cities.length < 3) {
+      cities.add(city);
+      storeCityLocally();
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void removeCity(CityModel city) {
-    _cities.remove(city);
-
+    cities.remove(city);
+    storeCityLocally();
     notifyListeners();
-  }
-
-  @override
-  ChangeNotifier createDefaultValue() {
-    throw UnimplementedError();
-  }
-
-  @override
-  ChangeNotifier fromPrimitives(Object? data) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Object? toPrimitives() {
-    throw UnimplementedError();
   }
 }
 
@@ -162,3 +152,9 @@ class Show extends StateNotifier<bool> {
 }
 
 final showProvider = StateNotifierProvider<Show, bool>((ref) => Show());
+storeCityLocally() async {
+  final pref = await SharedPreferences.getInstance();
+  List<String> cityListString =
+      CityServices().cities.map((city) => jsonEncode(city.toJson())).toList();
+  pref.setStringList('cityString', cityListString);
+}

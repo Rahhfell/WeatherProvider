@@ -1,8 +1,12 @@
+import 'dart:convert';
+
+import 'package:assessmentfc/models/city_list_model.dart';
 import 'package:assessmentfc/utilities/city.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:assessmentfc/repo/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'components/city_item.dart';
 import 'components/weather_carousel.dart';
@@ -14,9 +18,27 @@ class MyHomePage extends ConsumerStatefulWidget {
   ConsumerState<ConsumerStatefulWidget> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends ConsumerState<MyHomePage> {
+List<CityModel>? cachecity;
+
+class _MyHomePageState<State> extends ConsumerState<MyHomePage> {
+  getCities() async {
+    final pref = await SharedPreferences.getInstance();
+    final cityListString = pref.getStringList('cityString');
+
+    if (cityListString != null) {
+      setState(() {
+        cachecity = cityListString
+            .map((cityString) => CityModel.fromJson(jsonDecode(cityString)))
+            .toList();
+      });
+    } else {
+      cachecity = null;
+    }
+  }
+
   @override
-  initState() {
+  void initState() {
+    getCities();
     super.initState();
   }
 
@@ -24,8 +46,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   Widget build(BuildContext context) {
     GeoLocating geoloc = GeoLocating();
     Weather uWeather = Weather(main: '', description: '', icon: '');
-    final cityServices = ref.watch(carouselListProvider);
-    final carouselcities = cityServices.cities;
+
     Jsoncity jsonService;
 
     jsonService = Jsoncity();
@@ -37,6 +58,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       uWeather = geoloc.weather;
     }
 
+    final cityServices = ref.watch(carouselListProvider);
+    final carouselcities = cityServices.cities;
     return Scaffold(
         backgroundColor: Colors.grey,
         appBar: AppBar(
@@ -45,7 +68,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               child: Title(
                   color: Colors.redAccent,
                   child: const Text(
-                    'Assessment',
+                    'Weather App',
                     style: TextStyle(color: Colors.white),
                   )),
             )),
@@ -59,12 +82,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                 itemCount: listOfCities.length,
                 itemBuilder: (context, index) {
                   final city = listOfCities[index];
-                  return CityItem(
-                      city: city,
-                      onpressed: () {
-                        cityServices.addCity(city);
-                      },
-                      cityname: city.city);
+                  return CityItem(city: city, cityname: city.city);
                 }),
           ),
           Center(
@@ -82,7 +100,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             height: 10,
           ),
           FutureBuilder(
-              future: showUserLocation(),
+              future: showUserLocation().timeout(
+                const Duration(seconds: 10),
+              ),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
                   case ConnectionState.done:

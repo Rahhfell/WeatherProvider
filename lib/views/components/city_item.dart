@@ -1,15 +1,12 @@
 import 'package:assessmentfc/models/city_list_model.dart';
 import 'package:assessmentfc/repo/services.dart';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class CityItem extends ConsumerWidget {
-  const CityItem(
-      {super.key,
-      required this.onpressed,
-      required this.cityname,
-      required this.city});
-  final Function() onpressed;
+  const CityItem({super.key, required this.cityname, required this.city});
+
   final String cityname;
   final CityModel city;
 
