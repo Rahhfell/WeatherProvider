@@ -43,14 +43,18 @@ class GeoLocating {
     return position;
   }
 
-  Future getUserWeather({required BuildContext context}) async {
+  Future<Weather?> getUserWeather({required BuildContext context}) async {
     final position = await getCurrentPosition(context: context);
-    if (position == null) return;
+    if (position == null) return null;
     final UserWeatherServices uservices = UserWeatherServices();
-    await uservices.getWeather(position);
-    _weather = uservices.weather;
+    try {
+      await uservices.getWeather(position);
+      _weather = uservices.weather;
 
-    return _weather;
+      return _weather;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

@@ -53,9 +53,10 @@ class _MyHomePageState<State> extends ConsumerState<MyHomePage> {
     jsonService.cityList();
     final listOfCities = jsonService.listOfCities;
 
-    Future showUserLocation() async {
+    Future<Weather>? showUserWeather() async {
       await geoloc.getUserWeather(context: context);
       uWeather = geoloc.weather;
+      return uWeather;
     }
 
     final cityServices = ref.watch(carouselListProvider);
@@ -100,8 +101,8 @@ class _MyHomePageState<State> extends ConsumerState<MyHomePage> {
             height: 10,
           ),
           FutureBuilder(
-              future: showUserLocation().timeout(
-                const Duration(seconds: 10),
+              future: showUserWeather()!.timeout(
+                const Duration(seconds: 15),
               ),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
@@ -112,11 +113,15 @@ class _MyHomePageState<State> extends ConsumerState<MyHomePage> {
                               color: Colors.amber,
                               borderRadius: BorderRadius.circular(20)),
                           child: TextButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                if (showUserWeather() == null) {
+                                  await showUserWeather();
+                                  ref.read(showProvider.notifier).changeShow();
+                                }
                                 ref.read(showProvider.notifier).changeShow();
                               },
                               child: const Text(
-                                'Current Location',
+                                'Current Weather',
                                 style: TextStyle(color: Colors.black),
                               ))),
                       Consumer(builder: (context, ref, child) {
